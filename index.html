@@ -7,7 +7,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#4CAF50">
     <title>تعديل الأهداف - مراحل الرماية</title>
-    <!-- ربط ملف manifest داخلي -->
     <script type="application/json" id="manifest">
         {
             "name": "الرماية التكتيكية",
@@ -297,12 +296,10 @@
 </head>
 <body>
     <div class="container">
-        <!-- العنوان مع الصورة -->
         <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
             <img src="tc.png" alt="رمز الرماية" style="width: 40px; height: 40px; margin-left: 10px;">
             <h1 style="text-align: center; color: #333; margin: 0;">الرماية التكتيكية</h1>
         </div>
-        <!-- الواجهة الرئيسية -->
         <div class="main-section active" id="mainSection">
             <div class="top-controls">
                 <button onclick="addTarget()">إضافة هدف</button>
@@ -356,10 +353,11 @@
             </div>
         </div>
 
-        <!-- واجهة النتائج -->
         <div class="results-section" id="resultsSection">
             <div class="top-controls">
                 <button onclick="backToMain()">العودة إلى الصفحة الرئيسية</button>
+                <button onclick="showDetailsModal()">عرض التفاصيل</button>
+                <button onclick="shareResults()">مشاركة البيانات</button>
             </div>
             <div class="results-table">
                 <select id="stageFilter" class="stage-select" onchange="filterShooters()">
@@ -379,9 +377,35 @@
                     <tbody id="shootersBody"></tbody>
                 </table>
             </div>
+
+            <div id="detailsModal" class="modal">
+                <div class="modal-content">
+                    <h3>تفاصيل الرماية</h3>
+                    <table id="detailsTable">
+                        <thead>
+                            <tr>
+                                <th>T</th>
+                                <th>الرامي</th>
+                                <th>المرحلة</th>
+                                <th>A</th>
+                                <th>C</th>
+                                <th>D</th>
+                                <th>M</th>
+                                <th>NS</th>
+                                <th>الوقت</th> <!-- الوقت قبل النتيجة -->
+                                <th>النتيجة</th>
+                                <th>Hit-F</th>
+                                <th>النسبة %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailsBody"></tbody>
+                    </table>
+                    <button class="save-btn" onclick="shareDetails()">مشاركة التفاصيل</button>
+                    <button class="cancel-btn" onclick="closeDetailsModal()">إغلاق</button>
+                </div>
+            </div>
         </div>
 
-        <!-- النوافذ المنبثقة -->
         <div id="newStageModal" class="modal">
             <div class="modal-content">
                 <h3>إضافة مرحلة جديدة</h3>
@@ -439,7 +463,6 @@
     </div>
 
     <script>
-        // إعداد Manifest داخلي
         const manifestData = document.getElementById('manifest').textContent;
         const manifestBlob = new Blob([manifestData], { type: 'application/json' });
         const manifestURL = URL.createObjectURL(manifestBlob);
@@ -448,11 +471,9 @@
         link.href = manifestURL;
         document.head.appendChild(link);
 
-        // إعداد Service Worker داخلي
         const serviceWorkerScript = `
             const CACHE_NAME = 'shooting-app-v1';
             const urlsToCache = ['/', 'tc.png'];
-
             self.addEventListener('install', (event) => {
                 event.waitUntil(
                     caches.open(CACHE_NAME).then((cache) => {
@@ -460,7 +481,6 @@
                     })
                 );
             });
-
             self.addEventListener('fetch', (event) => {
                 event.respondWith(
                     caches.match(event.request).then((response) => {
@@ -468,7 +488,6 @@
                     })
                 );
             });
-
             self.addEventListener('activate', (event) => {
                 const cacheWhitelist = [CACHE_NAME];
                 event.waitUntil(
@@ -490,20 +509,14 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register(swURL)
-                    .then((registration) => {
-                        console.log('Service Worker مسجل بنجاح:', registration);
-                    })
-                    .catch((error) => {
-                        console.log('فشل تسجيل Service Worker:', error);
-                    });
+                    .then((registration) => console.log('Service Worker مسجل بنجاح:', registration))
+                    .catch((error) => console.log('فشل تسجيل Service Worker:', error));
             });
         }
 
-        // تنبيهات الاتصال
         window.addEventListener('online', () => alert('تم استعادة الاتصال بالإنترنت'));
         window.addEventListener('offline', () => alert('تم فقدان الاتصال بالإنترنت، التطبيق يعمل دون اتصال'));
 
-        // الكود الأساسي للتطبيق
         const scoring = {
             'alpha': 5,
             'charlie': 4,
@@ -531,7 +544,6 @@
             const stagesData = JSON.parse(localStorage.getItem('stagesData') || '[]');
             const stageInfo = stagesData.find(stage => stage.stageNumber === currentStage) || { targetsCount: 1 };
             const tbody = document.getElementById('targetBody');
-            
             tbody.innerHTML = '';
             targetCount = 0;
             for (let i = 0; i < stageInfo.targetsCount; i++) {
@@ -574,16 +586,13 @@
             const buttons = row.querySelectorAll('.score-btn');
             buttons.forEach(button => {
                 const zone = button.dataset.zone;
-
                 button.addEventListener('click', (e) => {
                     e.preventDefault();
                     incrementScore(button, zone, targetCount);
                 });
-
                 button.addEventListener('mousedown', () => startHold(button, zone, targetCount));
                 button.addEventListener('mouseup', clearHold);
                 button.addEventListener('mouseleave', clearHold);
-
                 button.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     touchStartTime = Date.now();
@@ -653,7 +662,6 @@
         function updateScore() {
             let totalScore = 0;
             const rows = document.querySelectorAll('#targetBody tr');
-
             rows.forEach(row => {
                 ['alpha', 'charlie', 'delta', 'miss', 'no-shoot'].forEach((zone, i) => {
                     const button = row.cells[i + 1].querySelector('.score-btn');
@@ -1151,7 +1159,6 @@
         function updateEditedShooterScore() {
             let totalScore = 0;
             const rows = document.querySelectorAll('#editShooterTargetsBody tr');
-
             rows.forEach(row => {
                 const alpha = parseInt(row.querySelector('input[name="alpha"]').value) || 0;
                 const charlie = parseInt(row.querySelector('input[name="charlie"]').value) || 0;
@@ -1263,6 +1270,166 @@
             alert('تم حذف بيانات الرامي بنجاح.');
             closeEditShooterModal();
             filterShooters();
+        }
+
+        function showDetailsModal() {
+            document.getElementById('detailsModal').style.display = 'block';
+            loadDetailsData();
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        function loadDetailsData() {
+            const allData = JSON.parse(localStorage.getItem('targetData') || '[]');
+            const stageFilter = document.getElementById('stageFilter').value;
+            const tbody = document.getElementById('detailsBody');
+
+            let filteredData = stageFilter === 'all' 
+                ? allData 
+                : allData.filter(data => data.stage === stageFilter);
+
+            filteredData.sort((a, b) => parseFloat(b.hitFactor) - parseFloat(a.hitFactor));
+
+            tbody.innerHTML = '';
+            if (filteredData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12">لا توجد بيانات متاحة</td></tr>';
+            } else {
+                const maxHitFactor = stageFilter === 'all'
+                    ? Math.max(...allData.map(data => parseFloat(data.hitFactor)), 0)
+                    : Math.max(...filteredData.map(data => parseFloat(data.hitFactor)), 0);
+
+                filteredData.forEach((data, index) => {
+                    const totalAlpha = data.targets.reduce((sum, t) => sum + parseInt(t.alpha), 0);
+                    const totalCharlie = data.targets.reduce((sum, t) => sum + parseInt(t.charlie), 0);
+                    const totalDelta = data.targets.reduce((sum, t) => sum + parseInt(t.delta), 0);
+                    const totalMiss = data.targets.reduce((sum, t) => sum + parseInt(t.miss), 0);
+                    const totalNoShoot = data.targets.reduce((sum, t) => sum + parseInt(t.noShoot), 0);
+                    const hitFactor = parseFloat(data.hitFactor) || 0;
+                    const percentage = maxHitFactor > 0 ? ((hitFactor / maxHitFactor) * 100).toFixed(2) : '0.00';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${data.shooterName || 'غير محدد'}</td>
+                        <td>${data.stage}</td>
+                        <td>${totalAlpha}</td>
+                        <td>${totalCharlie}</td>
+                        <td>${totalDelta}</td>
+                        <td>${totalMiss}</td>
+                        <td>${totalNoShoot}</td>
+                        <td>${data.time || '00.00'}</td> <!-- الوقت قبل النتيجة -->
+                        <td>${data.totalScore || 0}</td>
+                        <td>${data.hitFactor || '0.00'}</td>
+                        <td>${percentage}%</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        function shareResults() {
+            const allData = JSON.parse(localStorage.getItem('targetData') || '[]');
+            const stageFilter = document.getElementById('stageFilter').value;
+            let filteredData = stageFilter === 'all' 
+                ? allData 
+                : allData.filter(data => data.stage === stageFilter);
+
+            filteredData.sort((a, b) => parseFloat(b.hitFactor) - parseFloat(a.hitFactor));
+
+            let text = 'نتائج الرماية:\n\n';
+            text += '+----------------+----------+-------+---------+---------+---------+\n';
+            text += '| اسم الرامي     | المرحلة | الوقت | النقاط | Hit-F   | النسبة % |\n';
+            text += '+----------------+----------+-------+---------+---------+---------+\n';
+
+            const maxHitFactor = stageFilter === 'all'
+                ? Math.max(...allData.map(data => parseFloat(data.hitFactor)), 0)
+                : Math.max(...filteredData.map(data => parseFloat(data.hitFactor)), 0);
+
+            filteredData.forEach(data => {
+                const hitFactor = parseFloat(data.hitFactor) || 0;
+                const percentage = maxHitFactor > 0 ? ((hitFactor / maxHitFactor) * 100).toFixed(2) : '0.00';
+                const shooterName = (data.shooterName || 'غير محدد').padEnd(14, ' ');
+                const stage = data.stage.padEnd(8, ' ');
+                const time = (data.time || '00.00').padEnd(5, ' ');
+                const totalScore = (data.totalScore || 0).toString().padEnd(7, ' ');
+                const hitF = (data.hitFactor || '0.00').padEnd(7, ' ');
+                const perc = `${percentage}%`.padEnd(7, ' ');
+                text += `| ${shooterName} | ${stage} | ${time} | ${totalScore} | ${hitF} | ${perc} |\n`;
+            });
+
+            text += '+----------------+----------+-------+---------+---------+---------+\n';
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'نتائج الرماية',
+                    text: text,
+                }).catch((error) => console.log('خطأ في المشاركة:', error));
+            } else {
+                const mailtoLink = `mailto:?subject=نتائج الرماية&body=${encodeURIComponent(text)}`;
+                const whatsappLink = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                const choice = confirm('المشاركة عبر البريد الإلكتروني؟ (اضغط "إلغاء" للمشاركة عبر واتساب)');
+                window.open(choice ? mailtoLink : whatsappLink, '_blank');
+            }
+        }
+
+        function shareDetails() {
+            const allData = JSON.parse(localStorage.getItem('targetData') || '[]');
+            const stageFilter = document.getElementById('stageFilter').value;
+            let filteredData = stageFilter === 'all' 
+                ? allData 
+                : allData.filter(data => data.stage === stageFilter);
+
+            filteredData.sort((a, b) => parseFloat(b.hitFactor) - parseFloat(a.hitFactor));
+
+            let text = 'تفاصيل الرماية:\n\n';
+            text += '+-----+--------------+----------+-----+-----+-----+-----+-----+-------+---------+---------+---------+\n';
+            text += '| T   | الرامي       | المرحلة | A   | C   | D   | M   | NS  | الوقت | النتيجة | Hit-F   | النسبة % |\n';
+            text += '+-----+--------------+----------+-----+-----+-----+-----+-----+-------+---------+---------+---------+\n';
+
+            const maxHitFactor = stageFilter === 'all'
+                ? Math.max(...allData.map(data => parseFloat(data.hitFactor)), 0)
+                : Math.max(...filteredData.map(data => parseFloat(data.hitFactor)), 0);
+
+            filteredData.forEach((data, index) => {
+                const totalAlpha = data.targets.reduce((sum, t) => sum + parseInt(t.alpha), 0);
+                const totalCharlie = data.targets.reduce((sum, t) => sum + parseInt(t.charlie), 0);
+                const totalDelta = data.targets.reduce((sum, t) => sum + parseInt(t.delta), 0);
+                const totalMiss = data.targets.reduce((sum, t) => sum + parseInt(t.miss), 0);
+                const totalNoShoot = data.targets.reduce((sum, t) => sum + parseInt(t.noShoot), 0);
+                const hitFactor = parseFloat(data.hitFactor) || 0;
+                const percentage = maxHitFactor > 0 ? ((hitFactor / maxHitFactor) * 100).toFixed(2) : '0.00';
+
+                const t = (index + 1).toString().padEnd(3, ' ');
+                const shooterName = (data.shooterName || 'غير محدد').padEnd(12, ' ');
+                const stage = data.stage.padEnd(8, ' ');
+                const alpha = totalAlpha.toString().padEnd(3, ' ');
+                const charlie = totalCharlie.toString().padEnd(3, ' ');
+                const delta = totalDelta.toString().padEnd(3, ' ');
+                const miss = totalMiss.toString().padEnd(3, ' ');
+                const noShoot = totalNoShoot.toString().padEnd(3, ' ');
+                const time = (data.time || '00.00').padEnd(5, ' ');
+                const totalScore = (data.totalScore || 0).toString().padEnd(7, ' ');
+                const hitF = (data.hitFactor || '0.00').padEnd(7, ' ');
+                const perc = `${percentage}%`.padEnd(7, ' ');
+
+                text += `| ${t} | ${shooterName} | ${stage} | ${alpha} | ${charlie} | ${delta} | ${miss} | ${noShoot} | ${time} | ${totalScore} | ${hitF} | ${perc} |\n`;
+            });
+
+            text += '+-----+--------------+----------+-----+-----+-----+-----+-----+-------+---------+---------+---------+\n';
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'تفاصيل الرماية',
+                    text: text,
+                }).catch((error) => console.log('خطأ في المشاركة:', error));
+            } else {
+                const mailtoLink = `mailto:?subject=تفاصيل الرماية&body=${encodeURIComponent(text)}`;
+                const whatsappLink = `https://wa.me/?text=${encodeURIComponent(text)}`;
+                const choice = confirm('المشاركة عبر البريد الإلكتروني؟ (اضغط "إلغاء" للمشاركة عبر واتساب)');
+                window.open(choice ? mailtoLink : whatsappLink, '_blank');
+            }
         }
 
         window.onload = function() {
