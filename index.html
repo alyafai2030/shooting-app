@@ -392,7 +392,7 @@
                                 <th>D</th>
                                 <th>M</th>
                                 <th>NS</th>
-                                <th>الوقت</th> <!-- الوقت قبل النتيجة -->
+                                <th>الوقت</th>
                                 <th>النتيجة</th>
                                 <th>Hit-F</th>
                                 <th>النسبة %</th>
@@ -1319,7 +1319,7 @@
                         <td>${totalDelta}</td>
                         <td>${totalMiss}</td>
                         <td>${totalNoShoot}</td>
-                        <td>${data.time || '00.00'}</td> <!-- الوقت قبل النتيجة -->
+                        <td>${data.time || '00.00'}</td>
                         <td>${data.totalScore || 0}</td>
                         <td>${data.hitFactor || '0.00'}</td>
                         <td>${percentage}%</td>
@@ -1338,28 +1338,18 @@
 
             filteredData.sort((a, b) => parseFloat(b.hitFactor) - parseFloat(a.hitFactor));
 
-            let text = 'نتائج الرماية:\n\n';
-            text += '+----------------+----------+-------+---------+---------+---------+\n';
-            text += '| اسم الرامي     | المرحلة | الوقت | النقاط | Hit-F   | النسبة % |\n';
-            text += '+----------------+----------+-------+---------+---------+---------+\n';
+            let text = 'نتائج الرماية\n\n';
+            text += 'T\tالرامي\tالمرحلة\tالوقت\tالنتيجة\tHit-F\tالنسبة %\n';
 
             const maxHitFactor = stageFilter === 'all'
                 ? Math.max(...allData.map(data => parseFloat(data.hitFactor)), 0)
                 : Math.max(...filteredData.map(data => parseFloat(data.hitFactor)), 0);
 
-            filteredData.forEach(data => {
+            filteredData.forEach((data, index) => {
                 const hitFactor = parseFloat(data.hitFactor) || 0;
                 const percentage = maxHitFactor > 0 ? ((hitFactor / maxHitFactor) * 100).toFixed(2) : '0.00';
-                const shooterName = (data.shooterName || 'غير محدد').padEnd(14, ' ');
-                const stage = data.stage.padEnd(8, ' ');
-                const time = (data.time || '00.00').padEnd(5, ' ');
-                const totalScore = (data.totalScore || 0).toString().padEnd(7, ' ');
-                const hitF = (data.hitFactor || '0.00').padEnd(7, ' ');
-                const perc = `${percentage}%`.padEnd(7, ' ');
-                text += `| ${shooterName} | ${stage} | ${time} | ${totalScore} | ${hitF} | ${perc} |\n`;
+                text += `${index + 1}\t${data.shooterName || 'غير محدد'}\t${data.stage}\t${data.time || '00.00'}\t${data.totalScore || 0}\t${data.hitFactor || '0.00'}\t${percentage}%\n`;
             });
-
-            text += '+----------------+----------+-------+---------+---------+---------+\n';
 
             if (navigator.share) {
                 navigator.share({
@@ -1383,10 +1373,8 @@
 
             filteredData.sort((a, b) => parseFloat(b.hitFactor) - parseFloat(a.hitFactor));
 
-            let text = 'تفاصيل الرماية:\n\n';
-            text += '+-----+--------------+----------+-----+-----+-----+-----+-----+-------+---------+---------+---------+\n';
-            text += '| T   | الرامي       | المرحلة | A   | C   | D   | M   | NS  | الوقت | النتيجة | Hit-F   | النسبة % |\n';
-            text += '+-----+--------------+----------+-----+-----+-----+-----+-----+-------+---------+---------+---------+\n';
+            let text = 'تفاصيل الرماية\n\n';
+            text += 'T\tالرامي\tالمرحلة\tA\tC\tD\tM\tNS\tالوقت\tالنتيجة\tHit-F\tالنسبة %\n';
 
             const maxHitFactor = stageFilter === 'all'
                 ? Math.max(...allData.map(data => parseFloat(data.hitFactor)), 0)
@@ -1401,23 +1389,8 @@
                 const hitFactor = parseFloat(data.hitFactor) || 0;
                 const percentage = maxHitFactor > 0 ? ((hitFactor / maxHitFactor) * 100).toFixed(2) : '0.00';
 
-                const t = (index + 1).toString().padEnd(3, ' ');
-                const shooterName = (data.shooterName || 'غير محدد').padEnd(12, ' ');
-                const stage = data.stage.padEnd(8, ' ');
-                const alpha = totalAlpha.toString().padEnd(3, ' ');
-                const charlie = totalCharlie.toString().padEnd(3, ' ');
-                const delta = totalDelta.toString().padEnd(3, ' ');
-                const miss = totalMiss.toString().padEnd(3, ' ');
-                const noShoot = totalNoShoot.toString().padEnd(3, ' ');
-                const time = (data.time || '00.00').padEnd(5, ' ');
-                const totalScore = (data.totalScore || 0).toString().padEnd(7, ' ');
-                const hitF = (data.hitFactor || '0.00').padEnd(7, ' ');
-                const perc = `${percentage}%`.padEnd(7, ' ');
-
-                text += `| ${t} | ${shooterName} | ${stage} | ${alpha} | ${charlie} | ${delta} | ${miss} | ${noShoot} | ${time} | ${totalScore} | ${hitF} | ${perc} |\n`;
+                text += `${index + 1}\t${data.shooterName || 'غير محدد'}\t${data.stage}\t${totalAlpha}\t${totalCharlie}\t${totalDelta}\t${totalMiss}\t${totalNoShoot}\t${data.time || '00.00'}\t${data.totalScore || 0}\t${data.hitFactor || '0.00'}\t${percentage}%\n`;
             });
-
-            text += '+-----+--------------+----------+-----+-----+-----+-----+-----+-------+---------+---------+---------+\n';
 
             if (navigator.share) {
                 navigator.share({
